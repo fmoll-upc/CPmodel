@@ -5,7 +5,6 @@ It includes capacitive-resistive load.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import signal
 
 # input data
 vin = 0.35
@@ -20,79 +19,76 @@ cl = 500e-15
 Tc = 1e-9
 
 # Derived constants
-tau1 = rs*c1
-tauL = rl*cl
-tau3 = rs*cl
+tau1 = rs * c1
+tauL = rl * cl
+tau3 = rs * cl
 
 # Constants for 1st stage equation
 # Vi' = h1*Vi + h2*Vin
-h1 = np.exp(-Tc/(2*tau1))
-h2 = 1.0-h1
+h1 = np.exp(-Tc / (2 * tau1))
+h2 = 1.0 - h1
 
 # Constants for charge redistribution equation
-sr1 = -((1/tauL)+(1/tau3)+(1/tau1))/2
-sr2 = (1/(4*tau1*tau1))+(1/(4*tau3*tau3))+(1/(4*tauL*tauL))+(1/(2*tau1*tau3)) \
-      + (1/(2*tau3*tauL))-(1/(4*tau1*tauL))
+sr1 = -((1 / tauL) + (1 / tau3) + (1 / tau1)) / 2
+sr2 = (1 / (4 * tau1 * tau1)) + (1 / (4 * tau3 * tau3)) + (1 / (4 * tauL * tauL)) + (1 / (2 * tau1 * tau3)) \
+      + (1 / (2 * tau3 * tauL)) - (1 / (4 * tau1 * tauL))
 s1 = (sr1 + np.sqrt(sr2))
 s2 = (sr1 - np.sqrt(sr2))
-difs = 2*sr1
+difs = 2 * sr1
 print("s1, s2: ", s1, s2)
 
-exp_s1 = np.exp(s1*Tc/2)
-exp_s2 = np.exp(s2*Tc/2)
-
+exp_s1 = np.exp(s1 * Tc / 2)
+exp_s2 = np.exp(s2 * Tc / 2)
 
 # VL' = g1*Vi + g1*Vck + g2*VL
-g1 = (exp_s2-exp_s1)/(tau3*difs)
-g2 = (exp_s1*((1/tau3)+(1/tauL)+s2)-exp_s2*((1/tau3)+(1/tauL)+s1))/difs
+g1 = (exp_s2 - exp_s1) / (tau3 * difs)
+g2 = (exp_s1 * ((1 / tau3) + (1 / tauL) + s2) - exp_s2 * ((1 / tau3) + (1 / tauL) + s1)) / difs
 print("g factors: ", g1, g2)
 
 # V2' = ft1*V2 + ft2*VL + ft3*Vck
-r1 = ((1-exp_s1)/s1+(exp_s2-1)/s2)/(tauL*difs)
-rcf2 = ((1/tau3) + (1/tauL))
-rcfs1 = rcf2+s2
-rcfs2 = rcf2+s1
-r2 = (((1-exp_s1)*rcfs1/s1) + ((1-exp_s2)*rcfs2/s2))/difs
+r1 = ((1 - exp_s1) / s1 + (exp_s2 - 1) / s2) / (tauL * difs)
+rcf2 = ((1 / tau3) + (1 / tauL))
+rcfs1 = rcf2 + s2
+rcfs2 = rcf2 + s1
+r2 = (((1 - exp_s1) * rcfs1 / s1) + ((1 - exp_s2) * rcfs2 / s2)) / difs
 
-ft1 = (1-(r1/tau1)-(tau3*g1/tau1))
-ft2 = ((1-g2)*tau3/tau1)-(r2*tau3/(tauL*tau1))
-ft3 = -(tau3*g1/tau1)-(r1/tau1)
+ft1 = (1 - (r1 / tau1) - (tau3 * g1 / tau1))
+ft2 = ((1 - g2) * tau3 / tau1) - (r2 * tau3 / (tauL * tau1))
+ft3 = -(tau3 * g1 / tau1) - (r1 / tau1)
 print("fts:", ft1, ft2, ft3)
-
 
 # Matrius per valors de semiperiodes
 Asp1 = [[h1, 0.0, 0.0],
-     [0.0, ft1, ft2],
-     [0.0, g1, g2]]
+        [0.0, ft1, ft2],
+        [0.0, g1, g2]]
 
-
-Bsp1 = [[h2*vin],
-     [ft3*vck],
-     [g1*vck]]
+Bsp1 = [[h2 * vin],
+        [ft3 * vck],
+        [g1 * vck]]
 
 Asp2 = [[ft1, 0.0, ft2],
-     [0.0, h1, 0.0],
-     [g1, 0.0, g2]]
+        [0.0, h1, 0.0],
+        [g1, 0.0, g2]]
 
-
-Bsp2 = [[ft3*vck],
-     [h2*vin],
-     [g1*vck]]
+Bsp2 = [[ft3 * vck],
+        [h2 * vin],
+        [g1 * vck]]
 
 # Matrix A
-A = [[(h1*ft1), (g1*ft2), (g2*ft2)],
-     [0.0, (h1*ft1), (h1*ft2)],
-     [(g1*h1), (g2*g1), (g2*g2)]]
+A = [[(h1 * ft1), (g1 * ft2), (g2 * ft2)],
+     [0.0, (h1 * ft1), (h1 * ft2)],
+     [(g1 * h1), (g2 * g1), (g2 * g2)]]
 
 # Matrix B
-B = [[(h2*ft1*vin)+((ft2*g1)+ft3)*vck],
-     [(h2*vin)+(h1*ft3*vck)],
-     [(g1*h2*vin)+(g1*(1+g2)*vck)]]
+B = [[(h2 * ft1 * vin) + ((ft2 * g1) + ft3) * vck],
+     [(h2 * vin) + (h1 * ft3 * vck)],
+     [(g1 * h2 * vin) + (g1 * (1 + g2) * vck)]]
 
 print("B: ", B)
 # Matrix C - output
 C = [0.0, 0.0, 1.0]
 D = [0.0]
+
 
 # Results
 # eigen_A = np.linalg.eig(A)[0]
@@ -119,7 +115,7 @@ def seq_whole_Tc():
     diff1 = 10.0
     diff2 = 10.0
     diffL = 10.0
-    limit = 0.00001*(vin+vck)
+    limit = 0.00001 * (vin + vck)
 
     while diffL > limit:
         newv1 = A[0][0] * v1seq[i] + A[0][1] * v2seq[i] + A[0][2] * vLseq[i] + B[0][0]
@@ -146,7 +142,7 @@ def seq_half_Tc():
     diff1 = 10.0
     diff2 = 10.0
     diffL = 10.0
-    limit = 0.00001*(vin+vck)
+    limit = 0.00001 * (vin + vck)
 
     while diffL > limit:
         newv1p = Asp1[0][0] * v1seq[i] + Asp1[0][1] * v2seq[i] + Asp1[0][2] * vLseq[i] + Bsp1[0][0]
@@ -156,7 +152,7 @@ def seq_half_Tc():
         v2seq.append(newv2p)
         vLseq.append(newvLp)
         i += 1
-        td.append(i * Tc/2)
+        td.append(i * Tc / 2)
         newv1pp = Asp2[0][0] * v1seq[i] + Asp2[0][1] * v2seq[i] + Asp2[0][2] * vLseq[i] + Bsp2[0][0]
         newv2pp = Asp2[1][0] * v1seq[i] + Asp2[1][1] * v2seq[i] + Asp2[1][2] * vLseq[i] + Bsp2[1][0]
         newvLpp = Asp2[2][0] * v1seq[i] + Asp2[2][1] * v2seq[i] + Asp2[2][2] * vLseq[i] + Bsp2[2][0]
@@ -164,8 +160,8 @@ def seq_half_Tc():
         v2seq.append(newv2pp)
         vLseq.append(newvLpp)
         i += 1
-        td.append(i * Tc/2)
-        diffL = newvLpp - vLseq[i-2]
+        td.append(i * Tc / 2)
+        diffL = newvLpp - vLseq[i - 2]
     return [i, td, vLseq, v1seq, v2seq]
 
 
@@ -178,8 +174,8 @@ print("steady state voltage (half): ", ksp, tdsp[ksp], vl_sp[ksp])
 # Calcul d'amplitud de ripple
 # Es calcula el punt de treball partint del steady state.
 
-fa = (-(v1_ss[kss]+vck)/tau3+vl_ss[kss]*((1/tau3)+(1/tauL)+s2))/difs
-fb = ((v1_ss[kss]+vck)/tau3-vl_ss[kss]*((1/tau3)+(1/tauL)+s1))/difs
+fa = (-(v1_ss[kss] + vck) / tau3 + vl_ss[kss] * ((1 / tau3) + (1 / tauL) + s2)) / difs
+fb = ((v1_ss[kss] + vck) / tau3 - vl_ss[kss] * ((1 / tau3) + (1 / tauL) + s1)) / difs
 
 
 def derivVL(x):
@@ -188,14 +184,14 @@ def derivVL(x):
     elif x > 0.5:
         out = derivVL(0.5)
     else:
-        out = fa*s1*np.exp(s1*x*Tc/2)+fb*s2*np.exp(s2*x*Tc/2)
+        out = fa * s1 * np.exp(s1 * x * Tc / 2) + fb * s2 * np.exp(s2 * x * Tc / 2)
     return out
 
 
 def VL(x):
-    return fa*np.exp(s1*x)+fb*np.exp(s2*x)
+    return fa * np.exp(s1 * x) + fb * np.exp(s2 * x)
 
-import scipy.optimize
+
 
 # print(derivVL(0.23))
 # print(VL(0.6*Tc/2)-VL(0))
@@ -214,15 +210,15 @@ def findMaxVL(limitx, limity):
         return [0.0, 0.0]
     else:
         while (diferx > limitx) | (difery > limity):
-            newx = (xhigh*ylow-xlow*yhigh)/(ylow-yhigh)
+            newx = (xhigh * ylow - xlow * yhigh) / (ylow - yhigh)
             newy = derivVL(newx)
             if newy > 0:
-                diferx = newx-xlow
+                diferx = newx - xlow
                 difery = newy
                 xlow = newx
                 ylow = newy
             else:
-                diferx = xhigh-newx
+                diferx = xhigh - newx
                 difery = -newy
                 xhigh = newx
                 yhigh = newy
@@ -231,7 +227,7 @@ def findMaxVL(limitx, limity):
 
 xm, ym = findMaxVL(0.01, 50.0)
 
-ripple = VL(xm*Tc/2)-VL(0)
+ripple = VL(xm * Tc / 2) - VL(0)
 print("tmax, ripple:", xm, ripple)
 
 # plt.step(t1, y1[0])
