@@ -5,21 +5,25 @@ It includes capacitive-resistive load.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 
 # input data
-vin = 0.35
-vck = 0.35
+vin = 0.6
+vck = 0.6
 
-rs = 25e3
-c1 = 6e-15
+rs = 15e3
+c1 = 60e-15
+cp = 3.1e-15
+# Effect of parasitic caps
+vckp = vck*c1/(c1+cp)
 
-rl = 10e6
-cl = 500e-15
+rl = 100e6
+cl = 1e-12
 
-Tc = 1e-9
+Tc = 2e-9
 
 # Derived constants
-tau1 = rs * c1
+tau1 = rs * (c1 + cp)
 tauL = rl * cl
 tau3 = rs * cl
 
@@ -63,16 +67,16 @@ Asp1 = [[h1, 0.0, 0.0],
         [0.0, g1, g2]]
 
 Bsp1 = [[h2 * vin],
-        [ft3 * vck],
-        [g1 * vck]]
+        [ft3 * vckp],
+        [g1 * vckp]]
 
 Asp2 = [[ft1, 0.0, ft2],
         [0.0, h1, 0.0],
         [g1, 0.0, g2]]
 
-Bsp2 = [[ft3 * vck],
+Bsp2 = [[ft3 * vckp],
         [h2 * vin],
-        [g1 * vck]]
+        [g1 * vckp]]
 
 # Matrix A
 A = [[(h1 * ft1), (g1 * ft2), (g2 * ft2)],
@@ -80,9 +84,9 @@ A = [[(h1 * ft1), (g1 * ft2), (g2 * ft2)],
      [(g1 * h1), (g2 * g1), (g2 * g2)]]
 
 # Matrix B
-B = [[(h2 * ft1 * vin) + ((ft2 * g1) + ft3) * vck],
-     [(h2 * vin) + (h1 * ft3 * vck)],
-     [(g1 * h2 * vin) + (g1 * (1 + g2) * vck)]]
+B = [[(h2 * ft1 * vin) + ((ft2 * g1) + ft3) * vckp],
+     [(h2 * vin) + (h1 * ft3 * vckp)],
+     [(g1 * h2 * vin) + (g1 * (1 + g2) * vckp)]]
 
 print("B: ", B)
 # Matrix C - output
@@ -142,7 +146,7 @@ def seq_half_Tc():
     diff1 = 10.0
     diff2 = 10.0
     diffL = 10.0
-    limit = 0.00001 * (vin + vck)
+    limit = 0.0000001 * (vin + vck)
 
     while diffL > limit:
         newv1p = Asp1[0][0] * v1seq[i] + Asp1[0][1] * v2seq[i] + Asp1[0][2] * vLseq[i] + Bsp1[0][0]
@@ -230,8 +234,37 @@ xm, ym = findMaxVL(0.01, 50.0)
 ripple = VL(xm * Tc / 2) - VL(0)
 print("tmax, ripple:", xm, ripple)
 
+
+tcad = []
+vcad = []
+first = 1
+rowcount = 0
+
+with open('CP_V600m_CF60f_TC2n.csv','r') as csvfile:
+    cadplots = csv.reader(csvfile, delimiter=',')
+    for row in cadplots:
+        if (first == 1):
+            first = 0
+        else:
+            if  rowcount== 5:
+                rowcount = 0
+                tcad.append(float(row[0]))
+                vcad.append(float(row[1]))
+            else:
+                rowcount += 1
+
+from matplotlib.ticker import StrMethodFormatter
+plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.0e}')) # 0 decimal place
+
+plt.title('Vin=350mV; Cf=6fF')
+plt.plot(tcad,vcad, label='Simulation')
+plt.xlabel('Time (s)')
+plt.ylabel('Load Voltage (V)')
+
+
 # plt.step(t1, y1[0])
-plt.step(tdss, vl_ss)
-plt.step(tdss, v1_ss)
-plt.step(tdsp, v1_sp)
+plt.step(tdsp, vl_sp, label='Model')
+# plt.step(tdss, v1_ss)
+# plt.step(tdsp, v1_sp)
+plt.legend()
 plt.show()
