@@ -270,29 +270,33 @@ rs = 200e3
 c1 = [6e-15, 20e-15, 60e-15]
 cp = 3.1e-15
 
-rl = 100e6
+rl = [5e6, 7e6, 10e6, 15e6, 20e6, 30e6, 50e6, 70e6, 100e6]
 cl = 1e-12
 
-Tc = [2e-9, 10e-9, 100e-9, 500e-9, 1000e-9, 3000e-9]
+Tc = [2e-9, 5e-9, 10e-9, 30e-9, 50e-9, 100e-9, 500e-9, 1000e-9, 1500e-9, 2000e-9, 3000e-9]
 
 for cfly in c1:
     ssv_tc = []
     rip_tc = []
     stm_tc = []
-    for tclock in Tc:
-        steps, tss, ssv, vr = modelParams(tclock, cfly, cp, cl, rs, rl, vin, vck)
+    tclock = Tc[1]
+    for rload in rl:
+        steps, tss, ssv, vr = modelParams(tclock, cfly, cp, cl, rs, rload, vin, vck)
         ssv_tc.append(ssv)
         rip_tc.append(vr)
         stm_tc.append(tss)
-    plegend = "Cf=", cfly
-    plt.plot(Tc, ssv_tc, label=plegend)
+    plegend = 'Cf=' + str(cfly)
+    # plot_ssv = plt.plot(rl, ssv_tc, label=plegend)
+    # plot_rip = plt.plot(rl, rip_tc, label=plegend)
+    plot_stm = plt.plot(rl, stm_tc, label=plegend)
 
 from matplotlib.ticker import StrMethodFormatter
 
 plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.1e}'))  # 1 decimal place
+plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.1e}'))  # 1 decimal place
 
-plt.title('Ripple Voltage')
-plt.xlabel('Clock period (s)')
-plt.ylabel('Ripple Voltage (V)')
+plt.title('Settling Time')
+plt.xlabel('Load resistance')
+plt.ylabel('Time (s)')
 plt.legend()
 plt.show()
